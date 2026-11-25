@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.1] - 2026-11-26
+
+### Fitur Baru
+- **Kelompok (Kategori) Kustom**: buat nama kelompok sendiri untuk mengelompokkan dokumen hasil pindaian, lengkap dengan aksi ubah nama dan hapus kelompok (dokumen di dalamnya tetap aman saat kelompok dihapus).
+- **Akses Cepat Pengelompokan**: tambah kelompok langsung dari bilah filter di beranda (`+ Kelompok`), atur dari menu dokumen, kelompokkan beberapa dokumen sekaligus pada mode pilih banyak, atau ubah langsung di layar tinjau dokumen.
+
+### Peningkatan & Penyimpanan
+- **Migrasi Database SQLite v4**: penambahan tabel `categories` dengan migrasi otomatis (`onUpgrade`) dan validasi anti-duplikat *case-insensitive*.
+- **Tampilan Lencana Aman**: teks nama kelompok panjang kini menggunakan pemotongan (*ellipsis*) agar tidak meluap pada kartu grid maupun daftar.
+
 ## [1.0.0] - 2026-11-25
 
 Rilis perdana **JScan** — pemindai dokumen Android 100% offline berbasis Flutter & Rust.

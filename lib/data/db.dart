@@ -10,7 +10,7 @@ class AppDatabase {
     final dbPath = p.join(dbDir, 'jscan.db');
     _db = await openDatabase(
       dbPath,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -48,6 +48,12 @@ class AppDatabase {
             value TEXT NOT NULL
           )
         ''');
+        await db.execute('''
+          CREATE TABLE categories(
+            name TEXT PRIMARY KEY COLLATE NOCASE,
+            created_at INTEGER NOT NULL
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -66,6 +72,14 @@ class AppDatabase {
             CREATE TABLE IF NOT EXISTS settings(
               key TEXT PRIMARY KEY,
               value TEXT NOT NULL
+            )
+          ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS categories(
+              name TEXT PRIMARY KEY COLLATE NOCASE,
+              created_at INTEGER NOT NULL
             )
           ''');
         }

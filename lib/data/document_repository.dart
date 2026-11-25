@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
 
 import '../core/constants.dart';
 import '../core/utils.dart';
@@ -30,7 +31,7 @@ class DocumentRepository {
       args.add('%${trimmedQuery.toLowerCase()}%');
     }
     if (tag.isNotEmpty) {
-      whereClauses.add('d.tag = ?');
+      whereClauses.add('d.tag = ? COLLATE NOCASE');
       args.add(tag);
     }
 
@@ -154,17 +155,124 @@ class DocumentRepository {
     );
   }
 
-  Future<void> setDocumentTag(String docId, String tag) async {
+  Future<List<String>> listCategories() async {
     final db = await _db.database;
-    await db.update(
-      'documents',
-      {
-        'tag': tag,
-        'updated_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      where: 'id = ?',
-      whereArgs: [docId],
+    final customRows = await db.query(
+      'categories',
+      columns: ['name'],
+      orderBy: 'created_at ASC',
     );
+    final docTagRows = await db.rawQuery(
+      "SELECT DISTINCT tag FROM documents WHERE tag != '' ORDER BY tag COLLATE NOCASE ASC",
+    );
+    return mergeCategoryNames(
+      documentTags,
+      customRows.map((r) => r['name'] as String),
+      docTagRows.map((r) => r['tag'] as String),
+    );
+  }
+
+  Future<String> createCategory(String rawName) async {
+    final existing = await listCategories();
+    final error = validateCategoryName(rawName, existing);
+    if (error != null) throw FormatException(error);
+
+    final name = normalizeCategoryName(rawName);
+    final db = await _db.database;
+    await db.insert('categories', {
+      'name': name,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    });
+    return name;
+  }
+
+  Future<String> renameCategory(String oldName, String rawNewName) async {
+    final cleanOld = normalizeCategoryName(oldName);
+    if (isDefaultCategory(cleanOld)) {
+      throw const FormatException('Kelompok bawaan tidak dapat diubah namanya.');
+    }
+    final existing = await listCategories();
+    final error = validateCategoryName(
+      rawNewName,
+      existing,
+      ignoreCurrent: cleanOld,
+    );
+    if (error != null) throw FormatException(error);
+
+    final newName = normalizeCategoryName(rawNewName);
+    if (newName == cleanOld) return newName;
+
+    final db = await _db.database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.transaction((txn) async {
+      final updated = await txn.update(
+        'categories',
+        {'name': newName},
+        where: 'name = ? COLLATE NOCASE',
+        whereArgs: [cleanOld],
+      );
+      if (updated == 0) {
+        await txn.insert('categories', {'name': newName, 'created_at': now});
+      }
+      await txn.update(
+        'documents',
+        {'tag': newName, 'updated_at': now},
+        where: 'tag = ? COLLATE NOCASE',
+        whereArgs: [cleanOld],
+      );
+    });
+    return newName;
+  }
+
+  Future<void> deleteCategory(String name) async {
+    final clean = normalizeCategoryName(name);
+    if (isDefaultCategory(clean)) {
+      throw const FormatException('Kelompok bawaan tidak dapat dihapus.');
+    }
+    final db = await _db.database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'categories',
+        where: 'name = ? COLLATE NOCASE',
+        whereArgs: [clean],
+      );
+      await txn.update(
+        'documents',
+        {'tag': '', 'updated_at': now},
+        where: 'tag = ? COLLATE NOCASE',
+        whereArgs: [clean],
+      );
+    });
+  }
+
+  Future<void> setDocumentTag(String docId, String tag) async {
+    await setDocumentsTag([docId], tag);
+  }
+
+  Future<void> setDocumentsTag(Iterable<String> docIds, String tag) async {
+    final ids = docIds.toList();
+    if (ids.isEmpty) return;
+    final cleanTag = normalizeCategoryName(tag);
+    final db = await _db.database;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await db.transaction((txn) async {
+      if (cleanTag.isNotEmpty && !isDefaultCategory(cleanTag)) {
+        await txn.insert(
+          'categories',
+          {'name': cleanTag, 'created_at': now},
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+      for (final id in ids) {
+        await txn.update(
+          'documents',
+          {'tag': cleanTag, 'updated_at': now},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    });
   }
 
   Future<void> deleteDocument(String docId) async {

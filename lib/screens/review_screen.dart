@@ -10,6 +10,7 @@ import '../core/utils.dart';
 import '../data/models.dart';
 import '../src/rust/api.dart';
 import '../state/providers.dart';
+import '../widgets/category_sheet.dart';
 import 'camera_screen.dart';
 import 'corner_edit_screen.dart';
 import 'export_screen.dart';
@@ -126,6 +127,18 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       await _load();
       await ref.read(documentsProvider.notifier).refresh();
     }
+  }
+
+  Future<void> _editCategory() async {
+    final doc = _doc;
+    if (doc == null) return;
+    final picked = await showCategoryPickerSheet(
+      context,
+      currentTag: doc.tag,
+    );
+    if (picked == null || !mounted) return;
+    await ref.read(documentsProvider.notifier).setTag(doc.id, picked);
+    await _load();
   }
 
   Future<void> _rotateActivePage() async {
@@ -405,6 +418,22 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: _doc!.tag.isEmpty
+                ? 'Atur kelompok'
+                : 'Kelompok: ${_doc!.tag}',
+            onPressed: _busyMessage != null ? null : _editCategory,
+            icon: Icon(
+              _doc!.tag.isEmpty
+                  ? Icons.label_outline_rounded
+                  : Icons.label_rounded,
+              color: _doc!.tag.isEmpty
+                  ? scheme.onSurface
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.yellow
+                      : AppColors.yellowDeep),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
@@ -462,6 +491,54 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                           );
                         },
                       ),
+                      if (_doc!.tag.isNotEmpty)
+                        Positioned(
+                          top: 10,
+                          left: 12,
+                          right: 92,
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              color: AppColors.yellow,
+                              shape: const StadiumBorder(),
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: _busyMessage != null
+                                    ? null
+                                    : _editCategory,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.label_rounded,
+                                        size: 13,
+                                        color: AppColors.charcoal,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          _doc!.tag,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: AppColors.charcoal,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       Positioned(
                         top: 10,
                         right: 12,

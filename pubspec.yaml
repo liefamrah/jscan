@@ -1,7 +1,7 @@
 name: jscan
 description: "Pemindai dokumen Android 100% offline dengan deteksi 4 sudut otomatis, perbaikan perspektif & bayangan, serta alat PDF berbasis Flutter + Rust."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.14.0

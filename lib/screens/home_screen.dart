@@ -12,6 +12,7 @@ import '../core/utils.dart';
 import '../data/models.dart';
 import '../src/rust/api.dart';
 import '../state/providers.dart';
+import '../widgets/category_sheet.dart';
 import '../widgets/illustrations.dart';
 import 'camera_screen.dart';
 import 'corner_edit_screen.dart';
@@ -217,6 +218,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  Future<void> _bulkTag() async {
+    if (_selectedIds.isEmpty) return;
+    final ids = _selectedIds.toList();
+    final picked = await showCategoryPickerSheet(
+      context,
+      currentTag: '',
+      title: 'Kelompokkan ${ids.length} dokumen',
+    );
+    if (picked == null || !mounted) return;
+    _clearSelection();
+    await ref.read(documentsProvider.notifier).setTagMany(ids, picked);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            picked.isEmpty
+                ? 'Kelompok dilepas dari ${ids.length} dokumen.'
+                : '${ids.length} dokumen dimasukkan ke "$picked".',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _bulkMerge() async {
     if (_selectedIds.length < 2) return;
     final ids = _selectedIds.toList();
@@ -262,23 +287,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.label_outline_rounded),
-              title: const Text('Atur label'),
+              title: const Text('Atur kelompok'),
               trailing: doc.tag.isNotEmpty
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.yellow,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        doc.tag,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.charcoal,
+                  ? ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 130),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          doc.tag,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.charcoal,
+                          ),
                         ),
                       ),
                     )
@@ -322,48 +352,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _showTagDialog(ScanDocument doc) async {
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Pilih label dokumen'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, ''),
-            child: Row(
-              children: [
-                Icon(
-                  doc.tag.isEmpty
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                const Text('Tanpa label'),
-              ],
-            ),
-          ),
-          ...documentTags.map(
-            (tag) => SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, tag),
-              child: Row(
-                children: [
-                  Icon(
-                    doc.tag == tag
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(tag),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    final picked = await showCategoryPickerSheet(
+      context,
+      currentTag: doc.tag,
     );
     if (picked != null) {
       await ref.read(documentsProvider.notifier).setTag(doc.id, picked);
+    }
+  }
+
+  Future<void> _createCustomCategory() async {
+    final created = await showCategoryNameDialog(context);
+    if (created != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kelompok "$created" ditambahkan.')),
+      );
     }
   }
 
@@ -440,6 +443,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appSettingsProvider.select((s) => s.defaultGridView),
     );
     final selectedTag = ref.watch(homeSelectedTagProvider);
+    final categories = ref.watch(categoriesProvider).value ?? documentTags;
     final currentSort = ref.watch(homeSortProvider);
     final searchQuery = ref.watch(homeSearchQueryProvider);
     final docsAsync = ref.watch(documentsProvider);
@@ -530,6 +534,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         context: context,
                         docsAsync: docsAsync,
                         docsCount: docsList.length,
+                        categories: categories,
                         selectedTag: selectedTag,
                         searchQuery: searchQuery,
                         isGrid: isGrid,
@@ -588,6 +593,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
+            _HeaderCircleButton(
+              tooltip: 'Atur kelompok',
+              icon: Icons.label_outline_rounded,
+              bg: headerIconBg,
+              fg: headerInk,
+              onPressed: _bulkTag,
+            ),
+            const SizedBox(width: 8),
             if (_selectedIds.length >= 2) ...[
               _HeaderCircleButton(
                 tooltip: 'Gabung dokumen',
@@ -776,6 +789,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required BuildContext context,
     required AsyncValue<List<ScanDocument>> docsAsync,
     required int docsCount,
+    required List<String> categories,
     required String selectedTag,
     required String searchQuery,
     required bool isGrid,
@@ -835,18 +849,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ref.read(homeSelectedTagProvider.notifier).select(''),
                 ),
               ),
-              ...documentTags.map(
-                (tag) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _TagPillChip(
-                    label: tag,
-                    selected: selectedTag == tag,
-                    onTap: () => ref
-                        .read(homeSelectedTagProvider.notifier)
-                        .select(selectedTag == tag ? '' : tag),
-                  ),
-                ),
+              ...categories.map(
+                (tag) {
+                  final isSelected =
+                      selectedTag.toLowerCase() == tag.toLowerCase();
+                  final isCustom = !isDefaultCategory(tag);
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _TagPillChip(
+                      label: tag,
+                      selected: isSelected,
+                      onTap: () => ref
+                          .read(homeSelectedTagProvider.notifier)
+                          .select(isSelected ? '' : tag),
+                      onLongPress: isCustom
+                          ? () => showCustomCategoryActionsSheet(
+                              context,
+                              ref,
+                              tag,
+                            )
+                          : null,
+                    ),
+                  );
+                },
               ),
+              _AddTagPillChip(onTap: _createCustomCategory),
             ],
           ),
         ),
@@ -1060,11 +1087,13 @@ class _TagPillChip extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.onLongPress,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -1079,6 +1108,7 @@ class _TagPillChip extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           child: Center(
@@ -1089,6 +1119,56 @@ class _TagPillChip extends StatelessWidget {
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 color: selected ? AppColors.charcoal : scheme.onSurfaceVariant,
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddTagPillChip extends StatelessWidget {
+  const _AddTagPillChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? AppColors.yellow : AppColors.charcoal;
+
+    return Tooltip(
+      message: 'Buat kelompok baru',
+      child: Material(
+        color: isDark
+            ? AppColors.yellowContainerDark
+            : AppColors.yellowSoftLight,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: isDark
+                ? AppColors.yellow.withValues(alpha: 0.45)
+                : AppColors.yellowDeep.withValues(alpha: 0.45),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, size: 16, color: fg),
+                const SizedBox(width: 4),
+                Text(
+                  'Kelompok',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1367,7 +1447,7 @@ class _EmptySearchView extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Coba kata kunci lain atau bersihkan filter label.',
+              'Coba kata kunci lain atau bersihkan filter kelompok.',
               textAlign: TextAlign.center,
               style: textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
@@ -1449,21 +1529,27 @@ class _DocumentsGrid extends StatelessWidget {
                         Positioned(
                           left: 8,
                           top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.yellow,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              doc.tag,
-                              style: const TextStyle(
-                                color: AppColors.charcoal,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
+                          right: selecting ? 38 : 8,
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.yellow,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                doc.tag,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.charcoal,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
                           ),
@@ -1676,6 +1762,8 @@ class _DocumentsList extends StatelessWidget {
                             ),
                             child: Text(
                               doc.tag,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: AppColors.charcoal,
                                 fontSize: 10.5,

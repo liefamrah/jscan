@@ -27,14 +27,14 @@ Unduh langsung file APK rilis terbaru melalui halaman **GitHub Releases**:
 
 | Varian APK | Rekomendasi Perangkat | Tautan Unduh Langsung |
 | --- | --- | --- |
-| **ARM64 (`arm64-v8a`)** *(Disarankan)* | Hampir semua ponsel Android modern (ukuran paling kecil) | [**Unduh JScan-v1.0.0-arm64.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.0-arm64.apk) |
-| **ARMv7 (`armeabi-v7a`)** | Ponsel Android 32-bit lama | [**Unduh JScan-v1.0.0-armeabi-v7a.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.0-armeabi-v7a.apk) |
-| **Universal** | Semua arsitektur Android dalam satu file | [**Unduh JScan-v1.0.0-universal.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.0-universal.apk) |
+| **ARM64 (`arm64-v8a`)** *(Disarankan)* | Hampir semua ponsel Android modern (ukuran paling kecil) | [**Unduh JScan-v1.0.1-arm64.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.1-arm64.apk) |
+| **ARMv7 (`armeabi-v7a`)** | Ponsel Android 32-bit lama | [**Unduh JScan-v1.0.1-armeabi-v7a.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.1-armeabi-v7a.apk) |
+| **Universal** | Semua arsitektur Android dalam satu file | [**Unduh JScan-v1.0.1-universal.apk**](https://github.com/liefamrah/jscan/releases/latest/download/JScan-v1.0.1-universal.apk) |
 
 > Lihat semua rilis & checksum `SHA256SUMS.txt` di **[Halaman Releases](https://github.com/liefamrah/jscan/releases/latest)**.
 
 ### Cara Memasang APK
-1. Unduh varian APK yang sesuai (disarankan **`JScan-v1.0.0-arm64.apk`**).
+1. Unduh varian APK yang sesuai (disarankan **`JScan-v1.0.1-arm64.apk`**).
 2. Buka file APK dari pengelola berkas Android.
 3. Jika diminta, izinkan **Pasang aplikasi dari sumber ini**, lalu ketuk **Pasang**.
 
@@ -45,6 +45,7 @@ Unduh langsung file APK rilis terbaru melalui halaman **GitHub Releases**:
 - **Deteksi 4 Sudut Otomatis (Real-time)**: Algoritma *Gradient-Guided Hough Line + Contour* di Rust mengunci keempat tepi kertas dengan presisi tinggi meski ada bayangan atau klip di pinggir halaman.
 - **Pelurusan Perspektif & Hapus Bayangan**: Meluruskan foto dokumen miring (*bicubic homography `f64`*) dan meratakan pencahayaan untuk menghilangkan bayangan tangan/HP tanpa *halo*.
 - **Mode Pindai Lengkap**: Mendukung **Dokumen Tunggal**, **Multi-Halaman**, **KTP / Kartu 2 Sisi**, *auto-capture*, serta orientasi kamera *portrait* & *landscape*.
+- **Kelompok (Kategori) Kustom**: Buat, ubah nama, dan hapus kategori sendiri untuk merapikan file hasil pindaian, lengkap dengan filter beranda, pengelompokan massal, dan akses langsung dari layar tinjau dokumen.
 - **Editor Halaman Presisi**: Geser sudut dengan kaca pembesar (*loupe*), putar 90°, atur kecerahan/kontras, dan 4 filter (*Asli*, *Warna*, *Abu-abu*, *Hitam-Putih*).
 - **Alat PDF & Gambar Offline**:
   - JPG / PNG ke PDF

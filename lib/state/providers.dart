@@ -81,6 +81,56 @@ final homeSearchQueryProvider =
       HomeSearchQueryNotifier.new,
     );
 
+class CategoriesNotifier extends AsyncNotifier<List<String>> {
+  @override
+  Future<List<String>> build() =>
+      ref.watch(repositoryProvider).listCategories();
+
+  Future<void> refresh() async {
+    final list = await ref.read(repositoryProvider).listCategories();
+    if (!ref.mounted) return;
+    state = AsyncData(list);
+  }
+
+  Future<String> create(String rawName) async {
+    final created = await ref.read(repositoryProvider).createCategory(rawName);
+    if (!ref.mounted) return created;
+    await refresh();
+    return created;
+  }
+
+  Future<String> rename(String oldName, String rawNewName) async {
+    final renamed = await ref
+        .read(repositoryProvider)
+        .renameCategory(oldName, rawNewName);
+    if (!ref.mounted) return renamed;
+    if (ref.read(homeSelectedTagProvider).toLowerCase() ==
+        oldName.toLowerCase()) {
+      ref.read(homeSelectedTagProvider.notifier).select(renamed);
+    }
+    await refresh();
+    if (!ref.mounted) return renamed;
+    await ref.read(documentsProvider.notifier).refresh();
+    return renamed;
+  }
+
+  Future<void> delete(String name) async {
+    await ref.read(repositoryProvider).deleteCategory(name);
+    if (!ref.mounted) return;
+    if (ref.read(homeSelectedTagProvider).toLowerCase() == name.toLowerCase()) {
+      ref.read(homeSelectedTagProvider.notifier).select('');
+    }
+    await refresh();
+    if (!ref.mounted) return;
+    await ref.read(documentsProvider.notifier).refresh();
+  }
+}
+
+final categoriesProvider =
+    AsyncNotifierProvider<CategoriesNotifier, List<String>>(
+      CategoriesNotifier.new,
+    );
+
 class HomeSelectedTagNotifier extends Notifier<String> {
   @override
   String build() => '';
@@ -133,6 +183,13 @@ class DocumentsNotifier extends AsyncNotifier<List<ScanDocument>> {
 
   Future<void> setTag(String docId, String tag) async {
     await ref.read(repositoryProvider).setDocumentTag(docId, tag);
+    await ref.read(categoriesProvider.notifier).refresh();
+    await refresh();
+  }
+
+  Future<void> setTagMany(Iterable<String> docIds, String tag) async {
+    await ref.read(repositoryProvider).setDocumentsTag(docIds, tag);
+    await ref.read(categoriesProvider.notifier).refresh();
     await refresh();
   }
 

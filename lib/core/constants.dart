@@ -1,7 +1,7 @@
 import '../src/rust/api.dart';
 
 const String appName = 'JScan';
-const String appVersion = '1.0.0';
+const String appVersion = '1.0.1';
 const String developerUrl = 'https://github.com/liefamrah';
 const String developerLabel = 'github.com/liefamrah';
 const String donationUrl = 'https://saweria.co/aliefa';
@@ -21,6 +21,7 @@ const Quad fullFrameQuad = Quad(
 );
 
 const List<String> documentTags = ['Identitas', 'Struk', 'Kerja', 'Pribadi'];
+const int maxCategoryNameLength = 32;
 
 const List<String> watermarkPresets = [
   'HANYA UNTUK VERIFIKASI',

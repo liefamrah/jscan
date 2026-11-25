@@ -52,6 +52,67 @@ String sanitizeFileName(String raw, {String fallback = 'JScan_Dokumen'}) {
   return cleaned.length > 80 ? cleaned.substring(0, 80).trim() : cleaned;
 }
 
+String normalizeCategoryName(String raw) =>
+    raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+bool isDefaultCategory(String name) {
+  final lower = normalizeCategoryName(name).toLowerCase();
+  return documentTags.any((t) => t.toLowerCase() == lower);
+}
+
+String? validateCategoryName(
+  String raw,
+  Iterable<String> existingCategories, {
+  String? ignoreCurrent,
+}) {
+  final normalized = normalizeCategoryName(raw);
+  if (normalized.isEmpty) {
+    return 'Nama kelompok tidak boleh kosong.';
+  }
+  if (normalized.length > maxCategoryNameLength) {
+    return 'Maksimal $maxCategoryNameLength karakter.';
+  }
+  final lower = normalized.toLowerCase();
+  if (lower == 'semua' ||
+      lower == 'tanpa kelompok' ||
+      lower == 'tanpa label') {
+    return 'Nama kelompok ini sudah digunakan sistem.';
+  }
+  final ignoredLower = ignoreCurrent == null
+      ? null
+      : normalizeCategoryName(ignoreCurrent).toLowerCase();
+  for (final existing in existingCategories) {
+    final existingLower = normalizeCategoryName(existing).toLowerCase();
+    if (existingLower == lower && existingLower != ignoredLower) {
+      return 'Kelompok "$normalized" sudah ada.';
+    }
+  }
+  return null;
+}
+
+List<String> mergeCategoryNames(
+  Iterable<String> defaults,
+  Iterable<String> custom, [
+  Iterable<String> documentTags = const [],
+]) {
+  final seen = <String>{};
+  final result = <String>[];
+  void addAll(Iterable<String> items) {
+    for (final item in items) {
+      final normalized = normalizeCategoryName(item);
+      if (normalized.isEmpty) continue;
+      if (seen.add(normalized.toLowerCase())) {
+        result.add(normalized);
+      }
+    }
+  }
+
+  addAll(defaults);
+  addAll(custom);
+  addAll(documentTags);
+  return result;
+}
+
 String encodeQuadJson(Quad quad) {
   final list = quad.pts.map((p) => [p.$1, p.$2]).toList(growable: false);
   return jsonEncode(list);
