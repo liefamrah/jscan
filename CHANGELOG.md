@@ -1,0 +1,13 @@
+# Changelog
+
+## [1.0.0] - 2026-11-25
+
+Rilis perdana **JScan** — pemindai dokumen Android 100% offline berbasis Flutter & Rust.
+
+### Fitur Utama
+- **Pemindaian Kamera Pintar**: deteksi 4 sudut otomatis (*Gradient-Guided Hough Line + Contour*) secara real-time, mode Dokumen / Multi-Halaman / KTP 2 Sisi, penangkapan otomatis (*auto-capture*) dengan anti-*double capture*, serta dukungan orientasi *portrait* & *landscape*.
+- **Pelurusan Perspektif & Pembersihan Bayangan**: proyeksi homografi `f64` bicubic + estimasi latar *morphological closing* di Rust untuk menghilangkan bayangan tangan/ponsel tanpa *halo*.
+- **Penyuntingan Halaman**: koreksi 4 sudut dengan kaca pembesar (*loupe*) dan handle titik tengah sisi, putar 90°, filter (*Asli*, *Warna*, *Abu-abu*, *Hitam-Putih*), serta penyesuaian kecerahan & kontras.
+- **Alat Konversi Offline**: JPG/PNG ke PDF, PDF ke JPG/PNG (ZIP otomatis untuk multi-halaman), Kompres PDF, Gabung PDF, dan Pisah PDF.
+- **Ekspor & Privasi**: ekspor ke PDF (A4/Asli, pilihan margin, watermark) atau JPG/PNG, tanpa izin `INTERNET`, tanpa iklan, tanpa pelacakan.
+- **UI/UX Modern**: dukungan penuh Mode Terang & Gelap, tipografi lokal *Plus Jakarta Sans*, ikon adaptif + splash screen Android 12+, serta onboarding 3 halaman saat pertama kali dibuka.

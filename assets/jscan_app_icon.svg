@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="field" x1="54" y1="38" x2="456" y2="474" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#302F2D"/>
+      <stop offset="1" stop-color="#1D1D1C"/>
+    </linearGradient>
+    <linearGradient id="plane" x1="115" y1="92" x2="400" y2="416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7D568" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#F7D568" stop-opacity=".015"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Warm charcoal app tile -->
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#field)"/>
+  <path d="M112 104L384 72L440 344L168 440L72 248L112 104Z" fill="url(#plane)"/>
+
+  <!-- Scanner frame in the signature warm yellow -->
+  <path d="M112 194V151C112 129.461 129.461 112 151 112H194"
+        stroke="#F7D568" stroke-width="13" stroke-linecap="square"/>
+  <path d="M318 112H361C382.539 112 400 129.461 400 151V194"
+        stroke="#F7D568" stroke-width="13" stroke-linecap="square"/>
+  <path d="M400 318V361C400 382.539 382.539 400 361 400H318"
+        stroke="#F7D568" stroke-width="13" stroke-linecap="square"/>
+  <path d="M194 400H151C129.461 400 112 382.539 112 361V318"
+        stroke="#F7D568" stroke-width="13" stroke-linecap="square"/>
+
+  <!-- Custom JS monogram -->
+  <path d="M315 166H207V199H276V306C276 333 258 351 231 351C210 351 194 340 185 323"
+        stroke="#F5F1E9" stroke-width="27" stroke-linecap="square" stroke-linejoin="round"/>
+
+  <path d="M342 211C324 188 302 179 275 179C243 179 222 195 222 219C222 244 245 253 280 263L303 270C335 280 351 294 351 318C351 346 325 365 289 365C261 365 238 355 219 336"
+        stroke="#F7D568" stroke-width="25" stroke-linecap="square" stroke-linejoin="round"/>
+
+  <!-- Scan pulse -->
+  <path d="M365 244H397" stroke="#F5F1E9" stroke-width="8" stroke-linecap="round" opacity=".9"/>
+  <circle cx="397" cy="244" r="6" fill="#F5F1E9"/>
+</svg>
